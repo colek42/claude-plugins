@@ -1,0 +1,8 @@
+{
+  "name": "nk-dev-practices",
+  "description": "Core development philosophy: Linus mindset, critical thinking, XP/TDD patterns, self-skepticism",
+  "version": "1.0.0",
+  "author": {
+    "name": "Cole Kennedy"
+  }
+}

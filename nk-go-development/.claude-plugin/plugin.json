@@ -1,0 +1,8 @@
+{
+  "name": "nk-go-development",
+  "description": "Go-specific TDD patterns, test runners, table-driven tests, and testify usage",
+  "version": "1.0.0",
+  "author": {
+    "name": "Cole Kennedy"
+  }
+}

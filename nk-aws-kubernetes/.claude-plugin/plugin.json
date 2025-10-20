@@ -1,0 +1,8 @@
+{
+  "name": "nk-aws-kubernetes",
+  "description": "AWS profile management, kubectl context switching, and EKS helpers for Judge platform work",
+  "version": "1.0.0",
+  "author": {
+    "name": "Cole Kennedy"
+  }
+}

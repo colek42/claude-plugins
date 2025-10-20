@@ -1,0 +1,8 @@
+{
+  "name": "nk-devops-tools",
+  "description": "Helm, ArgoCD, Vault best practices and disk space management for Minikube/Skaffold workflows",
+  "version": "1.0.0",
+  "author": {
+    "name": "Cole Kennedy"
+  }
+}

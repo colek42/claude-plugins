@@ -1,0 +1,28 @@
+{
+  "name": "nkennedy-personal",
+  "owner": {
+    "name": "Cole Kennedy"
+  },
+  "plugins": [
+    {
+      "name": "nk-dev-practices",
+      "source": "./nk-dev-practices",
+      "description": "Core development philosophy: Linus mindset, critical thinking, XP/TDD patterns"
+    },
+    {
+      "name": "nk-aws-kubernetes",
+      "source": "./nk-aws-kubernetes",
+      "description": "AWS profile management, kubectl context switching, EKS helpers"
+    },
+    {
+      "name": "nk-go-development",
+      "source": "./nk-go-development",
+      "description": "Go-specific TDD patterns, test runners, formatting hooks, table-driven tests"
+    },
+    {
+      "name": "nk-devops-tools",
+      "source": "./nk-devops-tools",
+      "description": "Helm, ArgoCD, Vault practices and disk space management"
+    }
+  ]
+}
