@@ -23,6 +23,15 @@
       "name": "nk-devops-tools",
       "source": "./nk-devops-tools",
       "description": "Helm, ArgoCD, Vault practices and disk space management"
+    },
+    {
+      "name": "ai-notary",
+      "source": {
+        "source": "github",
+        "repo": "testifysec/witness-signer-daemon"
+      },
+      "description": "AI command attestation with two-tier policy model: infrastructure policies + feature policies with AI evaluators",
+      "version": "0.2.0"
     }
   ]
 }
