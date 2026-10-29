@@ -104,4 +104,5 @@ alt-minus = 'resize smart -100'
 alt-equal = 'resize smart +100'
 
 alt-shift-o = 'exec-and-forget ~/.config/aerospace/organize.py --all'
+alt-y = 'exec-and-forget ~/.config/aerospace/organize.py --accept'
 alt-shift-r = 'reload-config'

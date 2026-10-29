@@ -62,6 +62,18 @@ class Classify(unittest.TestCase):
         self.assertIsNone(classify("com.apple.finder", "", "Downloads"))
 
 
+class ActiveWindowIsUntouchable(unittest.TestCase):
+    # Cole: "if you don't disturb the active window, you can move around the
+    # windows that are not active."
+    def test_window_in_use_gets_a_suggestion(self):
+        from organize import call_transition
+        self.assertEqual(call_transition("319", focused="319"), "suggest")
+
+    def test_background_window_just_moves(self):
+        from organize import call_transition
+        self.assertEqual(call_transition("319", focused="285"), "move")
+
+
 class CallScreen(unittest.TestCase):
     def test_calls_go_to_prompter_when_it_is_connected(self):
         from organize import call_workspace
