@@ -94,6 +94,38 @@ def classify(bundle, cmdline, title):
     return APPS.get(bundle)
 
 
+def call_transition(wid, focused):
+    """What to do when an existing window turns into a call.
+
+    The window Cole is working in is never moved out from under him; he gets a
+    suggestion to accept with alt-y. Any other window just moves.
+    """
+    return "suggest" if wid == focused else "move"
+
+
+def suggest(state, wid, target, text):
+    state["suggestion"] = {"wid": wid, "to": target}
+    subprocess.run(["osascript", "-e", f'display notification "{text} (alt-y to move it)" with title "Desk"'],
+                   capture_output=True)
+    log({"ev": "suggest", "to": target})
+
+
+def accept():
+    """alt-y: apply the pending suggestion, if its window still exists."""
+    lock = open(STATE + ".lock", "w")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+        state = json.load(open(STATE))
+    except (OSError, ValueError):
+        return
+    s = state.pop("suggestion", None)
+    if s:
+        aerospace("move-node-to-workspace", "--window-id", s["wid"], s["to"])
+        aerospace("focus", "--window-id", s["wid"])
+        log({"ev": "accept", "to": s["to"]})
+        json.dump(state, open(STATE, "w"))
+
+
 def call_workspace(monitor_names):
     return "T" if PROMPTER and PROMPTER in monitor_names else "M"
 
@@ -158,6 +190,7 @@ def main():
             for line in aerospace("list-windows", "--all", "--format", fmt).splitlines()]
     occupied = {r[3] for r in rows}
     call_ws = call_workspace(aerospace("list-monitors", "--format", "%{monitor-name}").splitlines())
+    focused = aerospace("list-windows", "--focused", "--format", "%{window-id}").strip()
     cmdlines = {}
     windows = {}
     for wid, bundle, pid, ws, monitor, visible, layout, title in rows:
@@ -185,18 +218,19 @@ def main():
         elif prev is None:
             log({"ev": "place", "key": key, "from": None, "to": ws, "by": "open"})
         elif key == "chrome:meeting" and prev["key"] != "chrome:meeting" and ws != call_ws:
-            # A tab in an existing window just turned into a call: send it to the
-            # call screen once. If you move it back, it stays (key no longer changes).
-            aerospace("move-node-to-workspace", "--window-id", wid, call_ws)
-            aerospace("focus", "--window-id", wid)
-            log({"ev": "place", "key": key, "from": ws, "to": call_ws, "by": "sorter"})
-            ws, visible = call_ws, "false"
+            # A tab in an existing window just turned into a call. Fires once: if
+            # Cole moves it back, it stays (the key no longer changes).
+            if call_transition(wid, focused) == "suggest":
+                suggest(state, wid, call_ws, "Call in this window")
+            else:
+                aerospace("move-node-to-workspace", "--window-id", wid, call_ws)
+                log({"ev": "place", "key": key, "from": ws, "to": call_ws, "by": "sorter"})
+                ws, visible = call_ws, "false"
         elif prev["ws"] != ws:
             log({"ev": "place", "key": key, "from": prev["ws"], "to": ws, "by": "user"})
         windows[wid] = {"ws": ws, "key": key, "ultra": monitor == ULTRAWIDE and visible == "true"
                         and layout != "floating", "ghostty": bundle == GHOSTTY}
 
-    focused = aerospace("list-windows", "--focused", "--format", "%{window-id}").strip()
     if focused in windows and focused != state.get("focused"):
         log({"ev": "focus", "key": windows[focused]["key"], "ws": windows[focused]["ws"]})
 
@@ -238,8 +272,11 @@ def main():
                 aerospace("resize", "--window-id", ghost, "width", str(CENTER))
 
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
-    json.dump({"windows": windows, "focused": focused, "layouts": layouts}, open(STATE, "w"))
+    out = {"windows": windows, "focused": focused, "layouts": layouts}
+    if state.get("suggestion", {}).get("wid") in windows:
+        out["suggestion"] = state["suggestion"]
+    json.dump(out, open(STATE, "w"))
 
 
 if __name__ == "__main__":
-    main()
+    accept() if "--accept" in sys.argv else main()
