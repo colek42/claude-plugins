@@ -1,0 +1,8 @@
+{
+  "name": "nk-desk",
+  "description": "AeroSpace desk layout: pinned call screen, one agent session per ultrawide workspace, teleprompter workspace, usage log",
+  "version": "0.1.0",
+  "author": {
+    "name": "Cole Kennedy"
+  }
+}

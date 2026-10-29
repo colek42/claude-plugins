@@ -1,0 +1,24 @@
+{
+  "ultrawide": "ULTRA",
+  "apps": {
+    "us.zoom.xos": "M",
+    "com.tinyspeck.slackmacgap": "M",
+    "com.apple.MobileSMS": "M",
+    "com.appgate.sdp": "N",
+    "com.apple.Music": "P"
+  },
+  "chrome_data_dirs": {
+    "ChromeAgent": null,
+    "ChromeWork": "N"
+  },
+  "chrome_profiles": {
+    "Cole": null,
+    "Family": "P"
+  },
+  "launcher_titles": {
+    "com.microsoft.rdc.macos": {
+      "Windows App": "N"
+    }
+  },
+  "prompter": "PROMPTER"
+}
