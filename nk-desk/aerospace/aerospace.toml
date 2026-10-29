@@ -1,0 +1,107 @@
+# Laptop display = workspace M (calls, chat, calendar). It never changes.
+# Ultrawide = one agent session per workspace, alt-1..9:
+#   1 window: centered at 2560. 3 windows: side | Ghostty (agents) | side.
+#   A new Ghostty window gets the next empty workspace.
+#   N and P are fixed workspaces for pinned apps (see ~/.config/desk/rules.json).
+#   T = teleprompter; calls go there while it is connected.
+# organize.py rewrites the two ULTRA side gaps below itself; don't hand-edit them.
+# install.sh replaces ULTRA / PROMPTER with the monitor names from rules.json.
+
+start-at-login = true
+after-startup-command = ['exec-and-forget ~/.config/aerospace/organize.py --all']
+# Sort newly opened windows. Already-seen windows are left where you put them.
+on-focus-changed = ['exec-and-forget ~/.config/aerospace/organize.py']
+
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+accordion-padding = 30
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+[gaps]
+inner.horizontal = 8
+inner.vertical = 8
+outer.left = [{ monitor.'ULTRA' = 1280 }, { monitor.'built-in' = 390 }, 8]
+outer.right = [{ monitor.'ULTRA' = 1280 }, 8]
+outer.top = 8
+outer.bottom = 8
+
+[workspace-to-monitor-force-assignment]
+M = 'built-in'
+1 = ['ULTRA', 'secondary']
+2 = ['ULTRA', 'secondary']
+3 = ['ULTRA', 'secondary']
+4 = ['ULTRA', 'secondary']
+5 = ['ULTRA', 'secondary']
+6 = ['ULTRA', 'secondary']
+7 = ['ULTRA', 'secondary']
+8 = ['ULTRA', 'secondary']
+9 = ['ULTRA', 'secondary']
+N = ['ULTRA', 'secondary']
+P = ['ULTRA', 'secondary']
+# Teleprompter. Falls back to the laptop when unplugged.
+T = ['^PROMPTER$', 'built-in']
+
+# Calendar app window floats in the 390pt left gap on the laptop: always visible.
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+if.window-title-regex-substring = '^Google Calendar| - Calendar - '
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.appgate.sdp'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
+[mode.main.binding]
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+alt-m = 'workspace M'
+alt-n = 'workspace N'
+alt-p = 'workspace P'
+alt-t = 'workspace T'
+alt-tab = 'workspace-back-and-forth'
+
+alt-shift-1 = 'move-node-to-workspace 1'
+alt-shift-2 = 'move-node-to-workspace 2'
+alt-shift-3 = 'move-node-to-workspace 3'
+alt-shift-4 = 'move-node-to-workspace 4'
+alt-shift-5 = 'move-node-to-workspace 5'
+alt-shift-6 = 'move-node-to-workspace 6'
+alt-shift-7 = 'move-node-to-workspace 7'
+alt-shift-8 = 'move-node-to-workspace 8'
+alt-shift-9 = 'move-node-to-workspace 9'
+alt-shift-m = 'move-node-to-workspace M'
+alt-shift-n = 'move-node-to-workspace N'
+alt-shift-p = 'move-node-to-workspace P'
+alt-shift-t = 'move-node-to-workspace T'
+
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+alt-slash = 'layout tiles horizontal vertical'
+alt-comma = 'layout accordion horizontal vertical'
+alt-f = 'fullscreen'
+alt-shift-space = 'layout floating tiling'
+alt-minus = 'resize smart -100'
+alt-equal = 'resize smart +100'
+
+alt-shift-o = 'exec-and-forget ~/.config/aerospace/organize.py --all'
+alt-shift-r = 'reload-config'

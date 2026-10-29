@@ -57,6 +57,12 @@ Helm, ArgoCD, Vault best practices.
 **Commands:**
 - `/disk-cleanup` - Free 240GB+ from Minikube build cache
 
+#### nk-desk
+AeroSpace window layout for a laptop, a 32:9 ultrawide and a teleprompter.
+
+**Skills:**
+- `desk` - Workspace map, how agents place windows, what not to touch
+
 ## Installation
 
 ### 1. Add Personal Marketplace
@@ -72,6 +78,7 @@ Helm, ArgoCD, Vault best practices.
 /plugin install nk-aws-kubernetes@nkennedy-personal
 /plugin install nk-go-development@nkennedy-personal
 /plugin install nk-devops-tools@nkennedy-personal
+/plugin install nk-desk@nkennedy-personal
 ```
 
 ### 3. Project-Specific Plugins

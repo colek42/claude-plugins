@@ -25,6 +25,11 @@
       "description": "Helm, ArgoCD, Vault practices and disk space management"
     },
     {
+      "name": "nk-desk",
+      "source": "./nk-desk",
+      "description": "AeroSpace desk layout: pinned call screen, one agent session per ultrawide workspace, teleprompter, usage log"
+    },
+    {
       "name": "ai-notary",
       "source": {
         "source": "github",
