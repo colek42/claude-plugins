@@ -126,6 +126,30 @@ def accept():
         json.dump(state, open(STATE, "w"))
 
 
+def desk_mode(monitor_names):
+    return "desk" if ULTRAWIDE in monitor_names else "laptop"
+
+
+def laptop_layout(n):
+    """Laptop screen: one window full, two side by side, more stack full screen."""
+    return "h_tiles" if n <= 2 else "h_accordion"
+
+
+def set_builtin_gap(cfg, n):
+    return re.sub(r"(monitor\.'built-in' = )\d+", rf"\g<1>{n}", cfg)
+
+
+AGENDA_GAP = 390  # the pinned agenda column on the laptop, desk mode only
+
+
+def pin_agenda(pid):
+    subprocess.run(["osascript", "-e", f'''tell application "System Events" to tell (first process whose unix id is {pid})
+set w to (first window whose name contains " - Calendar - ")
+set position of w to {{8, 42}}
+set size of w to {{{AGENDA_GAP - 16}, 932}}
+end tell'''], capture_output=True)
+
+
 def call_workspace(monitor_names):
     return "T" if PROMPTER and PROMPTER in monitor_names else "M"
 
@@ -189,7 +213,9 @@ def main():
     rows = [(line.split("\t", 7) + [""] * 8)[:8]
             for line in aerospace("list-windows", "--all", "--format", fmt).splitlines()]
     occupied = {r[3] for r in rows}
-    call_ws = call_workspace(aerospace("list-monitors", "--format", "%{monitor-name}").splitlines())
+    monitors = aerospace("list-monitors", "--format", "%{monitor-name}").splitlines()
+    call_ws = call_workspace(monitors)
+    mode = desk_mode(monitors)
     focused = aerospace("list-windows", "--focused", "--format", "%{window-id}").strip()
     cmdlines = {}
     windows = {}
@@ -229,21 +255,40 @@ def main():
         elif prev["ws"] != ws:
             log({"ev": "place", "key": key, "from": prev["ws"], "to": ws, "by": "user"})
         windows[wid] = {"ws": ws, "key": key, "ultra": monitor == ULTRAWIDE and visible == "true"
-                        and layout != "floating", "ghostty": bundle == GHOSTTY}
+                        and layout != "floating", "ghostty": bundle == GHOSTTY, "pid": pid,
+                        "laptop": monitor.startswith("Built-in") and visible == "true"}
 
     if focused in windows and focused != state.get("focused"):
         log({"ev": "focus", "key": windows[focused]["key"], "ws": windows[focused]["ws"]})
 
-    # Laptop workspace M: accordion, re-applied when its window set changes.
     layouts = state.get("layouts", {})
-    on_m = sorted(w for w, v in windows.items() if v["ws"] == "M")
-    if on_m and layouts.get("M") != on_m:
-        layouts["M"] = on_m
-        aerospace("flatten-workspace-tree", "--workspace", "M")
-        aerospace("layout", "--workspace", "M", "--root", "h_accordion")
-        meeting = next((w for w in on_m if windows[w]["key"] == "chrome:meeting"), None)
-        if meeting:
-            aerospace("focus", "--window-id", meeting)
+    agenda = next((w for w, v in windows.items() if v["key"] == "chrome:calendar"), None)
+    if mode != state.get("mode"):
+        # Monitors changed: the agenda column only exists with the ultrawide in.
+        cfg = open(CONFIG).read()
+        want = set_builtin_gap(cfg, AGENDA_GAP if mode == "desk" else 8)
+        if want != cfg:
+            open(CONFIG, "w").write(want)
+            aerospace("reload-config")
+        if agenda:
+            aerospace("layout", "--window-id", agenda, "floating" if mode == "desk" else "tiling")
+            if mode == "desk":
+                pin_agenda(windows[agenda]["pid"])
+        layouts = {}
+        log({"ev": "mode", "mode": mode})
+
+    # Visible laptop workspace: side by side or full screen, re-applied only
+    # when its tiled window set changes. The pinned agenda floats and is excluded.
+    tiled = sorted(w for w, v in windows.items() if v["laptop"] and not (mode == "desk" and w == agenda))
+    if tiled:
+        lws = windows[tiled[0]]["ws"]
+        if layouts.get("laptop:" + lws) != tiled:
+            layouts["laptop:" + lws] = tiled
+            aerospace("flatten-workspace-tree", "--workspace", lws)
+            aerospace("layout", "--workspace", lws, "--root", laptop_layout(len(tiled)))
+            meeting = next((w for w in tiled if windows[w]["key"] == "chrome:meeting"), None)
+            if meeting and meeting != focused:
+                aerospace("focus", "--window-id", meeting)
 
     # Lay out the visible ultrawide workspace, but only when its window set
     # changed, so a resize you made by hand survives.
@@ -272,7 +317,7 @@ def main():
                 aerospace("resize", "--window-id", ghost, "width", str(CENTER))
 
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
-    out = {"windows": windows, "focused": focused, "layouts": layouts}
+    out = {"windows": windows, "focused": focused, "layouts": layouts, "mode": mode}
     if state.get("suggestion", {}).get("wid") in windows:
         out["suggestion"] = state["suggestion"]
     json.dump(out, open(STATE, "w"))

@@ -74,6 +74,26 @@ class ActiveWindowIsUntouchable(unittest.TestCase):
         self.assertEqual(call_transition("319", focused="285"), "move")
 
 
+class LaptopMode(unittest.TestCase):
+    # Cole: "laptop mode is shitty, we should either be side by side or full screen".
+    def test_mode_follows_the_ultrawide(self):
+        from organize import desk_mode
+        self.assertEqual(desk_mode(["ULTRA", "Built-in Retina Display"]), "desk")
+        self.assertEqual(desk_mode(["Built-in Retina Display"]), "laptop")
+
+    def test_one_or_two_windows_tile_more_go_full_screen(self):
+        from organize import laptop_layout
+        self.assertEqual(laptop_layout(1), "h_tiles")
+        self.assertEqual(laptop_layout(2), "h_tiles")
+        self.assertEqual(laptop_layout(3), "h_accordion")
+
+    def test_builtin_gap_rewritten_alone(self):
+        from organize import set_builtin_gap
+        cfg = "outer.left = [{ monitor.'ULTRA' = 8 }, { monitor.'built-in' = 390 }, 8]\n"
+        self.assertEqual(set_builtin_gap(cfg, 8),
+                         "outer.left = [{ monitor.'ULTRA' = 8 }, { monitor.'built-in' = 8 }, 8]\n")
+
+
 class CallScreen(unittest.TestCase):
     def test_calls_go_to_prompter_when_it_is_connected(self):
         from organize import call_workspace
