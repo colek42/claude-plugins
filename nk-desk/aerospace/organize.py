@@ -130,6 +130,12 @@ def desk_mode(monitor_names):
     return "desk" if ULTRAWIDE in monitor_names else "laptop"
 
 
+def is_tiled(layout):
+    """Windows that take tiling space. Floating, hidden-app (Cmd-H), minimized and
+    native-fullscreen windows report other layouts and must not be counted."""
+    return layout.startswith(("h_", "v_"))
+
+
 def laptop_layout(n):
     """Laptop screen: one window full, two side by side, more stack full screen."""
     return "h_tiles" if n <= 2 else "h_accordion"
@@ -255,21 +261,22 @@ def main():
         elif prev["ws"] != ws:
             log({"ev": "place", "key": key, "from": prev["ws"], "to": ws, "by": "user"})
         windows[wid] = {"ws": ws, "key": key, "ultra": monitor == ULTRAWIDE and visible == "true"
-                        and layout != "floating", "ghostty": bundle == GHOSTTY, "pid": pid,
-                        "laptop": monitor.startswith("Built-in") and visible == "true"}
+                        and is_tiled(layout), "ghostty": bundle == GHOSTTY, "pid": pid,
+                        "laptop": monitor.startswith("Built-in") and visible == "true" and is_tiled(layout)}
 
     if focused in windows and focused != state.get("focused"):
         log({"ev": "focus", "key": windows[focused]["key"], "ws": windows[focused]["ws"]})
 
     layouts = state.get("layouts", {})
     agenda = next((w for w, v in windows.items() if v["key"] == "chrome:calendar"), None)
+    # The agenda column exists only with the ultrawide in and an agenda window
+    # open; otherwise the strip would sit empty on every laptop workspace.
+    cfg = open(CONFIG).read()
+    want = set_builtin_gap(cfg, AGENDA_GAP if mode == "desk" and agenda else 8)
+    if want != cfg:
+        open(CONFIG, "w").write(want)
+        aerospace("reload-config")
     if mode != state.get("mode"):
-        # Monitors changed: the agenda column only exists with the ultrawide in.
-        cfg = open(CONFIG).read()
-        want = set_builtin_gap(cfg, AGENDA_GAP if mode == "desk" else 8)
-        if want != cfg:
-            open(CONFIG, "w").write(want)
-            aerospace("reload-config")
         if agenda:
             aerospace("layout", "--window-id", agenda, "floating" if mode == "desk" else "tiling")
             if mode == "desk":

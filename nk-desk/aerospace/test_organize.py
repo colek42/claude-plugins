@@ -87,6 +87,15 @@ class LaptopMode(unittest.TestCase):
         self.assertEqual(laptop_layout(2), "h_tiles")
         self.assertEqual(laptop_layout(3), "h_accordion")
 
+    def test_only_tiled_windows_count(self):
+        # A hidden app's window (Cmd-H) made 2 windows look like 3 and stacked them.
+        from organize import is_tiled
+        for layout in ("h_tiles", "v_tiles", "h_accordion", "v_accordion"):
+            self.assertTrue(is_tiled(layout), layout)
+        for layout in ("floating", "macos_native_window_of_hidden_app",
+                       "macos_native_fullscreen", "macos_native_minimized"):
+            self.assertFalse(is_tiled(layout), layout)
+
     def test_builtin_gap_rewritten_alone(self):
         from organize import set_builtin_gap
         cfg = "outer.left = [{ monitor.'ULTRA' = 8 }, { monitor.'built-in' = 390 }, 8]\n"
