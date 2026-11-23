@@ -143,6 +143,29 @@ class Plan(unittest.TestCase):
         self.assertIn("outer.right = [{ monitor.'ULTRA' = 1280 }, 8]", out)
         self.assertIn("outer.top = 8", out)
 
+    def test_margins_restored_when_window_set_unchanged(self):
+        # The ultrawide margins are one global setting. A one-window workspace sets
+        # them to 1280; coming back to an unchanged three-window workspace must put
+        # them back to 8 even though that workspace's layout is cached (Cole 11-23:
+        # "both the chrome windows ... should take up that full space").
+        from organize import ultra_step
+        stale = ("outer.left = [{ monitor.'ULTRA' = 1280 }, 8]\n"
+                 "outer.right = [{ monitor.'ULTRA' = 1280 }, 8]\n")
+        sig = ["1", "2", "3"]
+        cfg, relayout, moves = ultra_step(stale, {"1": sig}, "1", sig, 3, True)
+        self.assertIn("monitor.'ULTRA' = 8 }", cfg)
+        self.assertNotIn("1280", cfg)
+        self.assertFalse(relayout)  # a hand resize survives
+
+    def test_changed_window_set_relayouts(self):
+        from organize import ultra_step
+        cfg = ("outer.left = [{ monitor.'ULTRA' = 8 }, 8]\n"
+               "outer.right = [{ monitor.'ULTRA' = 8 }, 8]\n")
+        out, relayout, moves = ultra_step(cfg, {"1": ["1", "2"]}, "1", ["1", "2", "3"], 3, True)
+        self.assertEqual(out, cfg)
+        self.assertTrue(relayout)
+        self.assertEqual(moves, ["left", "left", "right"])
+
 
 if __name__ == "__main__":
     unittest.main()
