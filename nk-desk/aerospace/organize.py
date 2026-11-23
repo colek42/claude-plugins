@@ -190,6 +190,20 @@ def set_margins(cfg, left, right):
     return cfg
 
 
+def ultra_step(cfg, layouts, ws, sig, n, has_ghostty):
+    """Decide what to do for the visible ultrawide workspace.
+
+    Returns (config_text, relayout, moves). The side margins are one global
+    setting shared by every workspace on the ultrawide, so they are recomputed
+    on every run: a one-window workspace sets them to 1280, and coming back to
+    an unchanged multi-window workspace must put them back. The re-layout
+    (flatten, moves, balance) runs only when the window set changed, so a resize
+    made by hand survives.
+    """
+    left, right, moves = plan(n, has_ghostty)
+    return set_margins(cfg, left, right), layouts.get(ws) != sig, moves
+
+
 def aerospace(*args):
     return subprocess.run([AEROSPACE, *args], capture_output=True, text=True).stdout
 
@@ -303,19 +317,18 @@ def main():
     if ultra:
         ws = ultra[0][1]["ws"]
         sig = sorted(w for w, _ in ultra)
-        if layouts.get(ws) != sig:
+        tiled = [w for w, v in ultra]
+        ghost = next((w for w in tiled if windows[w]["ghostty"]), None)
+        cfg = open(CONFIG).read()
+        want, relayout, moves = ultra_step(cfg, layouts, ws, sig, len(tiled), ghost is not None)
+        if want != cfg:
+            open(CONFIG, "w").write(want)
+            aerospace("reload-config")
+        if relayout:
             layouts[ws] = sig
             aerospace("flatten-workspace-tree", "--workspace", ws)
             # "auto" orientation can come up vertical; the ultrawide is always columns.
             aerospace("layout", "--workspace", ws, "--root", "h_tiles")
-            tiled = [w for w, v in ultra]
-            ghost = next((w for w in tiled if windows[w]["ghostty"]), None)
-            left, right, moves = plan(len(tiled), ghost is not None)
-            cfg = open(CONFIG).read()
-            want = set_margins(cfg, left, right)
-            if want != cfg:
-                open(CONFIG, "w").write(want)
-                aerospace("reload-config")
             for direction in moves:
                 aerospace("move", "--window-id", ghost, "--boundaries", "workspace",
                           "--boundaries-action", "stop", direction)
